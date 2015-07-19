@@ -180,7 +180,7 @@ function addKeys() {
     var keyLength = longestKeyLength + (shortestKeyLength - longestKeyLength) * weight;
 
     var key = new THREE.Mesh(
-      new THREE.CubeGeometry(keyLength, keyThickness, keyWidth),
+      new THREE.BoxGeometry(keyLength, keyThickness, keyWidth),
       new THREE.MeshPhongMaterial({ color: brassColor })
     );
 
@@ -312,7 +312,7 @@ function throwBallsToMusic() {
   var currTime = timeInSong + interpolatedTime;
 
   while (notes[0].time < currTime + ballHeadstart) {
-    addBall(notes[0].note - MIDI.pianoKeyOffset);
+    addBall(notes[0].note - 21);  // MIDI.pianoKeyOffset
     notes.splice(0, 1);
 
     if (notes.length === 0) {

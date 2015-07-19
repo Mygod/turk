@@ -134,8 +134,11 @@ THREE.TubeGeometry = function ( radiusTop, radiusBottom, radiusInnerTop, radiusI
           uv2 = tmp; 
       } 
       
-            this.faces.push( new THREE.Face4( v1, v2, v3, v4, [ n1, n1, n2, n2 ] ) );
-      this.faceVertexUvs[ 0 ].push( [ uv1, uv2, uv3, uv4 ] ); 
+            // this.faces.push( new THREE.Face4( v1, v2, v3, v4, [ n1, n1, n2, n2 ] ) );
+        this.faces.push( new THREE.Face3( v1, v2, v3, n1 ) );
+        this.faceVertexUvs[ 0 ].push( [ uv1, uv2, uv3 ] );
+        this.faces.push( new THREE.Face3( v1, v3, v4, n2 ) );
+        this.faceVertexUvs[ 0 ].push( [ uv1, uv3, uv4 ] );
     }
   }
  
@@ -156,12 +159,12 @@ THREE.TubeGeometry = function ( radiusTop, radiusBottom, radiusInnerTop, radiusI
             
             if( x % 2 !=0) {
                 //if we are at an odd index, we push the indices in the given order
-          this.faces.push( new THREE.Face3( v1, v2, v3, [ n1, n1, n1 ] ) );
+          this.faces.push( new THREE.Face3( v1, v2, v3, n1 ) );
           this.faceVertexUvs[ 0 ].push( [ uv1, uv2, uv3 ] );
           
       } else { 
           //if we are at an even index, we swap the last two indices          
-          this.faces.push( new THREE.Face3( v1, v3, v2, [ n1, n1, n1 ] ) );
+          this.faces.push( new THREE.Face3( v1, v3, v2, n1 ) );
           this.faceVertexUvs[ 0 ].push( [ uv1, uv3, uv2 ] );
       }
     }
@@ -183,18 +186,17 @@ THREE.TubeGeometry = function ( radiusTop, radiusBottom, radiusInnerTop, radiusI
 
             if( x % 2 !=0) {
                 //if we are at an odd index, we push the indices in the given order
-          this.faces.push( new THREE.Face3( v1, v2, v3, [ n2, n2, n2 ] ) );
+          this.faces.push( new THREE.Face3( v1, v2, v3, n2 ) );
           this.faceVertexUvs[ 0 ].push( [ uv1, uv2, uv3 ] );
             } else {
                 //if we are at an even index, we swap the last two indices  
-                this.faces.push( new THREE.Face3( v1, v3, v2, [ n2, n2, n2 ] ) );
+                this.faces.push( new THREE.Face3( v1, v3, v2, n2 ) );
           this.faceVertexUvs[ 0 ].push( [ uv1, uv3, uv2 ] );
             }
     }
 
   }
- 
-  this.computeCentroids();
+
   this.computeFaceNormals(); 
 }
 
