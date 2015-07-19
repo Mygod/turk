@@ -22,10 +22,9 @@ var cannonTopRadius = 15;
 var cannonThickness = 3;
 var cannonHeight = 40;
 
-var shortestKeyLength = 15;
-var longestKeyLength = 40;
+var keyLength = 40;
 var keyWidth = 5;
-var keyThickness = 2;
+var keyThickness = 5;
 
 var numKeys = 88;
 
@@ -176,11 +175,10 @@ function addCannon() {
 function addKeys() {
   for (var i = 0; i < numKeys; i++) {
     // use linear interpolation to find key length
-    var weight = i / numKeys;
-    var keyLength = longestKeyLength + (shortestKeyLength - longestKeyLength) * weight;
+    var k = Math.pow(2, -i / 48);
 
     var key = new THREE.Mesh(
-      new THREE.BoxGeometry(keyLength, keyThickness, keyWidth),
+      new THREE.BoxGeometry(keyLength * k, keyThickness * k, keyWidth),
       new THREE.MeshPhongMaterial({ color: brassColor })
     );
 

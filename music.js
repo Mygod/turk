@@ -25,7 +25,7 @@ window.onload = function() {
     };
     reader.onerror = function (e) {
       console.error(e);
-    }
+    };
     reader.readAsArrayBuffer(e.target.files[0]);
   });
 };
