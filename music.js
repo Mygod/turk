@@ -35,6 +35,7 @@ function playArrayBuffer(buffer) {
   player.timeWarp = 1;
 
   player.stop();
+  for (var i = 0; i < 16; ++i) MIDI.channels[i].instrument = 0; // reset
   musicPlaying = false;
   notes = [];
   timeInSong = -startDelay;
@@ -45,17 +46,27 @@ function playArrayBuffer(buffer) {
     midiData = player.data;
 
     currentTime = 0;
+    var instruments = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     for (var i = 0; i < midiData.length; i++) {
       midiDatum = midiData[i];
 
-      midiEvent = midiDatum[0].event;
+      event = midiDatum[0].event;
       interval = midiDatum[1];
 
       currentTime += interval;
 
-      if (midiEvent.subtype === 'noteOn') {
-        notes.push({ note: midiEvent.noteNumber, time: currentTime })
+      switch (event.subtype) {
+        case 'noteOn':
+          notes.push({
+            note: event.noteNumber,
+            time: currentTime,
+            instrument: instruments[event.channel]
+          });
+          break;
+        case 'programChange':
+          instruments[event.channel] = event.programNumber;
+          break;
       }
     }
 

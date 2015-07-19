@@ -1,20 +1,6 @@
 var renderer, scene, camera, controls;
 
-var transitionColors = [
-  0xCC6600,
-  0xD17519,
-  0xD68533,
-  0xDB944D,
-  0xE0A366,
-  0xE6B280,
-  0xEBC299,
-  0xF0D1B2,
-  0xF5E0CC,
-  0xFAF0E6
-];
-
-var brassColor = transitionColors[0];
-var ballColor = 0xD4D4BF;
+var brassColor = 0xCC6600;
 var tubeColor = 0xD1D1D1;
 
 var cannonBaseRadius = 10;
@@ -70,13 +56,18 @@ var ballHeadstart = 1730;
 var timeInSong = -startDelay;
 var lastUpdatedTime;
 
-function Ball(keyTarget) {
+function getColor(instrument) {
+  return instrument == 0 ? new THREE.Color(0xD4D4BF) : new THREE.Color().setHSL((instrument / 48) % 1, 1, .5);
+}
+
+function Ball(keyTarget, instrument) {
   this.target = keyTarget;
+  this.instrument = instrument;
   this.angle = 2 * Math.PI * keyTarget / numKeys;
   this.velocityUp = initVelocity * Math.sin(firingAngle);
   this.cannon = new THREE.Mesh(
     new THREE.SphereGeometry(ballRadius, 16, 16),
-    new THREE.MeshPhongMaterial({ color: ballColor })
+    new THREE.MeshPhongMaterial({ color: getColor(instrument) })
   );
   this.cannon.position.y = 0;
   this.object = new THREE.Object3D();
@@ -271,8 +262,8 @@ function addTubing() {
   }
 }
 
-function addBall(keyTarget) {
-  var ball = new Ball(keyTarget);
+function addBall(keyTarget, instrument) {
+  var ball = new Ball(keyTarget, instrument);
 
   queue.push(Date.now());
 
@@ -310,7 +301,7 @@ function throwBallsToMusic() {
   var currTime = timeInSong + interpolatedTime;
 
   while (notes[0].time < currTime + ballHeadstart) {
-    addBall(notes[0].note - 21);  // MIDI.pianoKeyOffset
+    addBall(notes[0].note - 21, notes[0].instrument);
     notes.splice(0, 1);
 
     if (notes.length === 0) {
@@ -336,7 +327,7 @@ function moveBalls() {
       } else {
         ballHeadstart = Date.now() - queue.shift(1);
 
-        makeKeyGlow(ball.target);
+        makeKeyGlow(ball.target, ball.instrument);
 
         // and bounce back up!
         ball.velocityUp = bounceVelocity * Math.sin(bounceAngle);
@@ -356,20 +347,16 @@ function moveBalls() {
   }
 }
 
-function makeKeyGlow(key) {
-  keys[key].material.color.setHex(transitionColors[transitionColors.length - 1]);
+function makeKeyGlow(key, instrument) {
+  keys[key].material.color.highlightColor = getColor(instrument);
+  keys[key].material.color.highlightAlpha = 1;
 }
 
 function darkenKeys() {
   for (var i = 0; i < numKeys; i++) {
     var key = keys[i];
-
-    var state = transitionColors.indexOf(key.material.color.getHex());
-    if (state === 0) {
-      continue;
-    } else {
-      key.material.color.setHex(transitionColors[state - 1]);
-    }
+    if (key.material.color.highlightAlpha > 0) key.material.color.setHex(brassColor)
+      .lerp(key.material.color.highlightColor, key.material.color.highlightAlpha -= 0.1);
   }
 }
 
