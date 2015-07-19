@@ -91,8 +91,8 @@ function init() {
   camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
   scene = new THREE.Scene();
 
-  camera.position.x = -200;
-  camera.position.y = 200;
+  camera.position.x = -250;
+  camera.position.y = 250;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   // start the renderer
