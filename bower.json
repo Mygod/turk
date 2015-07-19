@@ -24,6 +24,7 @@
   ],
   "dependencies": {
     "three.js": "~0.71.0",
-    "jquery": "~2.1.4"
+    "jquery": "~2.1.4",
+    "gleitz/midi-js-soundfonts": "~0.2.1"
   }
 }

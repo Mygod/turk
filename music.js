@@ -7,13 +7,15 @@ var musicPlaying = false;
 var player;
 
 window.onload = function() {
-  MIDI.loadPlugin(function() {
-    console.log("Sound being generated with " + MIDI.lang + ".");
-    
-    if (window.location.hash === '#' || window.location.hash === '') {
-      window.location.hash = '#Rachmaninov%20-%20Flight%20of%20the%20Bumblebee';
-    }
-  }, "soundfont/acoustic_grand_piano-mp3.js");
+  MIDI.loadPlugin({
+    onsuccess: function() {
+      if (window.location.hash === '#' || window.location.hash === '') {
+        window.location.hash = '#Rachmaninov%20-%20Flight%20of%20the%20Bumblebee';
+      }
+    },
+    instruments: [ 'acoustic_grand_piano' ],
+    soundfontUrl: '/bower_components/midi-js-soundfonts/FluidR3_GM/'
+  });
 
   $('#filePicker').change(function (e) {
     if (e.target.files.length !== 1) return;
