@@ -68,6 +68,9 @@
                 <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="track-choices-3">
                 </ul>
               </li>
+              <li class="divider"></li>
+              <li><a href="#" onclick="playLocal()">Play local .mid file</a></li>
+              <li><a href="#" onclick="playOnline()">Play online .mid file</a></li>
             </ul>
           </li>
           <li class="divider-vertical"></li>
@@ -83,6 +86,7 @@
     <div class="rest">
       <div id="turk"></div>
     </div>
+    <input type="file" id="filePicker" style="display: none" />
 
     <script src="assets/js/bootstrap.min.js"></script>
     <script src="TubeGeometry.js"></script>

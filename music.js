@@ -14,55 +14,80 @@ window.onload = function() {
       window.location.hash = '#Rachmaninov%20-%20Flight%20of%20the%20Bumblebee';
     }
   }, "soundfont/acoustic_grand_piano-mp3.js");
+
+  $('#filePicker').change(function (e) {
+    if (e.target.files.length !== 1) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      playArrayBuffer(e.target.result);
+    };
+    reader.onerror = function (e) {
+      console.error(e);
+    }
+    reader.readAsArrayBuffer(e.target.files[0]);
+  });
 };
+
+function playArrayBuffer(buffer) {
+  player = MIDI.Player;
+  player.timeWarp = 1;
+
+  player.stop();
+  musicPlaying = false;
+  notes = [];
+  timeInSong = -startDelay;
+  lastUpdatedTime = null;
+
+  player.currentData = buffer;
+  player.loadMidiFile(function() {
+    midiData = player.data;
+
+    currentTime = 0;
+
+    for (var i = 0; i < midiData.length; i++) {
+      midiDatum = midiData[i];
+
+      midiEvent = midiDatum[0].event;
+      interval = midiDatum[1];
+
+      currentTime += interval;
+
+      if (midiEvent.subtype === 'noteOn') {
+        notes.push({ note: midiEvent.noteNumber, time: currentTime })
+      }
+    }
+
+    player.addListener(function(data) {
+      resetTimer(data.now);
+    });
+
+    start = new Date();
+
+    setTimeout(function() {
+      player.start();
+    }, startDelay);
+
+    musicPlaying = true;
+  }, null, function (e) {
+    console.error(e);
+  });
+}
 
 function switchTo(file) {
   request = new XMLHttpRequest();
   request.responseType = 'arraybuffer';
   request.open("GET", file, true);
-  request.onload = function (event) {
-    player = MIDI.Player;
-    player.timeWarp = 1;
-
-    player.stop();
-    musicPlaying = false;
-    notes = [];
-    timeInSong = -startDelay;
-    lastUpdatedTime = null;
-
-    player.currentData = request.response;
-    player.loadMidiFile(function() {
-      midiData = player.data;
-
-      currentTime = 0;
-
-      for (var i = 0; i < midiData.length; i++) {
-        midiDatum = midiData[i];
-
-        midiEvent = midiDatum[0].event;
-        interval = midiDatum[1];
-
-        currentTime += interval;
-
-        if (midiEvent.subtype === 'noteOn') {
-          notes.push({ note: midiEvent.noteNumber, time: currentTime })
-        }
-      }
-
-      player.addListener(function(data) {
-        resetTimer(data.now);
-      });
-
-      start = new Date();
-
-      setTimeout(function() {
-        player.start();
-      }, startDelay);
-
-      musicPlaying = true;
-    }, null, function (e) {
-      console.error(e);
-    });
+  request.onload = function () {
+    playArrayBuffer(request.response);
   };
   request.send(null);
+}
+
+function playLocal() {
+  $('#filePicker').click();
+}
+
+function playOnline() {
+  var url = prompt('Enter URL:');
+  if (url) switchTo(url);
 }
