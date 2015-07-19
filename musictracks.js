@@ -234,7 +234,6 @@ $(function() {
       currComposer = composer;
       pieces.push(number + '' + piece);
     } else { // new composer
-      console.log(currComposer);  
       addToDropdown(currComposer, getSubmenu(currComposer, pieces));
 
       currComposer = composer;
