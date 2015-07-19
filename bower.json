@@ -1,0 +1,28 @@
+{
+  "name": "turk",
+  "version": "0.0.1",
+  "homepage": "https://github.com/Mygod/turk",
+  "authors": [
+    "ucarion <ulysse@ulysse.io>",
+    "Mygod <mygodstudio@gmail.com>"
+  ],
+  "description": "An Animusic-inspired machine that plays classical music with marbles.",
+  "main": "index.html",
+  "keywords": [
+    "turk",
+    "musical",
+    "webgl",
+    "midi"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "three.js": "~0.71.0"
+  }
+}
