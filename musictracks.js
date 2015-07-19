@@ -260,7 +260,7 @@ $(function() {
         switchTo('tracks/' + tracks[i] + '.mid')
       }
     }
-  }
+  };
 
   window.onhashchange();
 });
@@ -296,6 +296,5 @@ function getSubmenu(composer, pieces) {
 }
 
 function getChoice(composer, piece, number) {
-  var target = number + '-' + composer +' - ' + piece;
-  return '<li><a href="#' + encodeURIComponent(piece) + '">' + piece + '</a></li>'
+  return '<li><a href="#' + encodeURIComponent(composer +' - ' + piece) + '">' + piece + '</a></li>'
 }

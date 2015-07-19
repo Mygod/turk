@@ -11,15 +11,12 @@ window.onload = function() {
     console.log("Sound being generated with " + MIDI.lang + ".");
     
     if (window.location.hash === '#' || window.location.hash === '') {
-      switchTo('tracks/157-Rachmaninov - Flight of the Bumblebee.mid');
+      window.location.hash = '#Rachmaninov%20-%20Flight%20of%20the%20Bumblebee';
     }
   }, "soundfont/acoustic_grand_piano-mp3.js");
-}
+};
 
 function switchTo(file) {
-  var songName = file.substring(11, file.length - 4);
-  $('#current-song').text('Currently Playing: ' + songName);
-
   request = new XMLHttpRequest();
   request.responseType = 'arraybuffer';
   request.open("GET", file, true);
