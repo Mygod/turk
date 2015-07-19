@@ -257,7 +257,7 @@ $(function() {
     for (var i = 0; i < tracks.length; i++) {
       if (tracks[i].indexOf(target) != -1) {
         console.log('swith');
-        switchTo('tracks/' + tracks[i])
+        switchTo('tracks/' + tracks[i] + '.mid')
       }
     }
   }
