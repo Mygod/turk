@@ -764,7 +764,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       currentTime = queuedTime - offset;
       ///
       var event = obj[0].event;
-      if (event.type !== 'channel') {
+      if (event.type !== 'channel' && event.subtype !== 'endOfTrack') {
         continue;
       }
       ///
@@ -816,10 +816,14 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
         case 'channelAftertouch':
           MIDI.channelAftertouch(channelId, event.amount, delay);
           break;
+        case 'endOfTrack':
+          MIDI.stopAllNotes(delay);
+          break;
         default:
           break;
       }
     }
+
     ///
     onsuccess && onsuccess(eventQueue);
   };
@@ -989,8 +993,13 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       }
     };
 
-    midi.stopAllNotes = function() {
-      for (var nid = 0, length = audioBuffers.length; nid < length; nid++) {
+    midi.stopAllNotes = function(delay) {
+      if (delay) return setTimeout(function () {
+        for (var nid = 0, length = audioBuffers.length; nid < length; nid++) {
+          audioBuffers[nid].pause();
+        }
+      }, delay * 1000);
+      else for (var nid = 0, length = audioBuffers.length; nid < length; nid++) {
         audioBuffers[nid].pause();
       }
     };
@@ -1091,7 +1100,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       }
 
       /// add gain + pitchShift
-      var gain = velocity / 127 * 2 - 1;
+      var gain = velocity / 127;
       source.connect(ctx.destination);
       source.playbackRate.value = 1; // pitch shift
       source.gainNode = ctx.createGain(); // gain
@@ -1139,7 +1148,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
             // add { 'metadata': { release: 0.3 } } to soundfont files
             var gain = source.gainNode.gain;
             gain.linearRampToValueAtTime(gain.value, delay);
-            gain.linearRampToValueAtTime(-1.0, delay + 0.3);
+            gain.linearRampToValueAtTime(0, delay + 0.3);
           }
           ///
           if (useStreamingBuffer) {
@@ -1184,9 +1193,9 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       return res;
     };
 
-    midi.stopAllNotes = function() {
+    midi.stopAllNotes = function(d) {
       for (var sid in sources) {
-        var delay = 0;
+        var delay = d;
         if (delay < ctx.currentTime) {
           delay += ctx.currentTime;
         }
@@ -1383,10 +1392,10 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
     }
   };
 
-  midi.stopAllNotes = function() {
-    if (output.clear) output.clear();
+  midi.stopAllNotes = function(delay) {
+    if (!delay && output.clear) output.clear();
     for (var channel = 0; channel < 16; channel ++) {
-      output.send([0xB0 + channel, 0x7B, 0]);
+      output.send([0xB0 + channel, 0x7B, 0], delay || 0);
     }
   };
 
@@ -1403,7 +1412,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       root.loadPlugin(opts);
     };
     ///
-    navigator.requestMIDIAccess().then(function(access) {
+    navigator.requestMIDIAccess({ sysex: true }).then(function(access) {
       plugin = access;
       var pluginOutputs = plugin.outputs;
       if (typeof pluginOutputs == 'function') pluginOutputs = pluginOutputs();  // Chrome pre-43

@@ -59,6 +59,7 @@ function playArrayBuffer(buffer) {
           notes.push({
             note: event.noteNumber,
             time: currentTime,
+            velocity: event.velocity,
             instrument: instruments[event.channel]
           });
           break;

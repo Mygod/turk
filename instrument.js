@@ -60,13 +60,13 @@ function getColor(instrument) {
   return instrument == 0 ? new THREE.Color(0xD4D4BF) : new THREE.Color().setHSL((instrument / 48) % 1, 1, .5);
 }
 
-function Ball(keyTarget, instrument) {
+function Ball(keyTarget, velocity, instrument) {
   this.target = keyTarget;
   this.instrument = instrument;
   this.angle = 2 * Math.PI * keyTarget / numKeys;
   this.velocityUp = initVelocity * Math.sin(firingAngle);
   this.cannon = new THREE.Mesh(
-    new THREE.SphereGeometry(ballRadius, 16, 16),
+    new THREE.SphereGeometry(ballRadius * Math.log(1 + velocity) / Math.log(2) / 7, 16, 16),
     new THREE.MeshPhongMaterial({ color: getColor(instrument) })
   );
   this.cannon.position.y = 0;
@@ -261,8 +261,8 @@ function addTubing() {
   }
 }
 
-function addBall(keyTarget, instrument) {
-  var ball = new Ball(keyTarget, instrument);
+function addBall(keyTarget, velocity, instrument) {
+  var ball = new Ball(keyTarget, velocity, instrument);
 
   queue.push(Date.now());
 
@@ -300,7 +300,7 @@ function throwBallsToMusic() {
   var currTime = timeInSong + interpolatedTime;
 
   while (notes[0].time < currTime + ballHeadstart) {
-    addBall(notes[0].note - 21, notes[0].instrument);
+    if (notes[0].velocity > 0) addBall(notes[0].note - 21, notes[0].velocity, notes[0].instrument);
     notes.splice(0, 1);
 
     if (notes.length === 0) {
