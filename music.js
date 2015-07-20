@@ -10,9 +10,6 @@ window.onload = function() {
   MIDI.loadPlugin({
     onsuccess: function() {
       console.log('Using ' + MIDI.__api);
-      if (window.location.hash === '#' || window.location.hash === '') {
-        window.location.hash = '#Rachmaninov%20-%20Flight%20of%20the%20Bumblebee';
-      }
     },
     instruments: [ 'acoustic_grand_piano' ],
     soundfontUrl: '/bower_components/midi-js-soundfonts/FluidR3_GM/'
