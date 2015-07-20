@@ -9,6 +9,7 @@ var player;
 window.onload = function() {
   MIDI.loadPlugin({
     onsuccess: function() {
+      console.log('Using ' + MIDI.__api);
       if (window.location.hash === '#' || window.location.hash === '') {
         window.location.hash = '#Rachmaninov%20-%20Flight%20of%20the%20Bumblebee';
       }

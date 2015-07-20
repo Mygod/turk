@@ -153,13 +153,9 @@ function MidiFile(data) {
 					event.velocity = stream.readInt8();
 					return event;
 				case 0x09:
+					event.subtype = 'noteOn';
 					event.noteNumber = param1;
 					event.velocity = stream.readInt8();
-					if (event.velocity == 0) {
-						event.subtype = 'noteOff';
-					} else {
-						event.subtype = 'noteOn';
-					}
 					return event;
 				case 0x0a:
 					event.subtype = 'noteAftertouch';

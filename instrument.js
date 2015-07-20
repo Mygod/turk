@@ -347,6 +347,7 @@ function moveBalls() {
 }
 
 function makeKeyGlow(key, instrument) {
+  if (!keys[key]) return;
   keys[key].material.color.highlightColor = getColor(instrument);
   keys[key].material.color.highlightAlpha = 1;
 }

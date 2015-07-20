@@ -688,6 +688,12 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
   var getContext = function() {
     if (MIDI.api === 'webaudio') {
       return MIDI.WebAudio.getContext();
+    } else if (MIDI.api === 'webmidi') {
+      midi.ctx = {
+        get currentTime() {
+          return window.performance.now() / 1000;
+        }
+      };
     } else {
       midi.ctx = {currentTime: 0};
     }
@@ -740,7 +746,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
     var interval = eventQueue[0] && eventQueue[0].interval || 0;
     var foffset = currentTime - midi.currentTime;
     ///
-    if (MIDI.api !== 'webaudio') { // set currentTime on ctx
+    if (MIDI.api === 'audiotag') { // set currentTime on ctx
       var now = getNow();
       __now = __now || now;
       ctx.currentTime = (now - __now) / 1000;
@@ -793,9 +799,22 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
           eventQueue.push({
             event: event,
             time: queueTime,
-            source: MIDI.noteOff(channelId, event.noteNumber, delay),
+            source: MIDI.noteOff(channelId, event.noteNumber, event.velocity, delay),
             interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 128, 0)
           });
+          break;
+        case 'noteAftertouch':
+          if (channel.mute) break;
+          note = event.noteNumber - (midi.MIDIOffset || 0);
+          eventQueue.push({
+            event: event,
+            time: queueTime,
+            source: MIDI.noteAftertouch(channelId, event.noteNumber, event.amount, delay),
+            interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 0xa0, 0)
+          });
+          break;
+        case 'channelAftertouch':
+          MIDI.channelAftertouch(channelId, event.amount, delay);
           break;
         default:
           break;
@@ -821,6 +840,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       }
     }
     // run callback to cancel any notes still playing
+    if (MIDI.stopAllNotes) MIDI.stopAllNotes();
     for (var key in noteRegistrar) {
       var o = noteRegistrar[key]
       if (noteRegistrar[key].message === 144 && onMidiEvent) {
@@ -852,7 +872,6 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
   window.Audio && (function() {
     var midi = root.AudioTag = { api: 'audiotag' };
     var noteToKey = {};
-    var volume = 127; // floating point
     var buffer_nid = -1; // current channel
     var audioBuffers = []; // the audio channels
     var notesOn = []; // instrumentId + noteId that is currently playing in each 'channel', for routing noteOff/chordOff calls
@@ -861,7 +880,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       audioBuffers[nid] = new Audio();
     }
 
-    var playChannel = function(channel, note) {
+    var playChannel = function(channel, note, velocity) {
       if (!root.channels[channel]) return;
       var instrument = root.channels[channel].instrument;
       var instrumentId = root.GM.byId[instrument].id;
@@ -878,7 +897,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
           return;
         }
         audio.src = root.Soundfont[instrumentId][note.id];
-        audio.volume = volume / 127;
+        audio.volume = velocity / 127;
         audio.play();
         buffer_nid = nid;
       }
@@ -906,9 +925,6 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
     midi.audioBuffers = audioBuffers;
     midi.send = function(data, delay) { };
     midi.setController = function(channel, type, value, delay) { };
-    midi.setVolume = function(channel, n) {
-      volume = n; //- should be channel specific volume
-    };
 
     midi.programChange = function(channel, program) {
       root.channels[channel].instrument = program;
@@ -921,24 +937,27 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       if (!notes[id]) return;
       if (delay) {
         return setTimeout(function() {
-          playChannel(channel, id);
+          playChannel(channel, id, velocity);
         }, delay * 1000);
       } else {
-        playChannel(channel, id);
+        playChannel(channel, id, velocity);
       }
     };
 
-    midi.noteOff = function(channel, note, delay) {
-// 			var id = noteToKey[note];
-// 			if (!notes[id]) return;
-// 			if (delay) {
-// 				return setTimeout(function() {
-// 					stopChannel(channel, id);
-// 				}, delay * 1000)
-// 			} else {
-// 				stopChannel(channel, id);
-// 			}
+    midi.noteOff = function(channel, note, velocity, delay) {
+ 			var id = noteToKey[note];
+ 			if (!notes[id]) return;
+ 			if (delay) {
+ 				return setTimeout(function() {
+ 					stopChannel(channel, id);
+ 				}, delay * 1000)
+ 			} else {
+ 				stopChannel(channel, id);
+ 			}
     };
+
+    midi.noteAftertouch = function(channel, note, amount, delay) { };
+    midi.channelAftertouch = function(channel, amount, delay) { };
 
     midi.chordOn = function(channel, chord, velocity, delay) {
       for (var idx = 0; idx < chord.length; idx ++) {
@@ -947,10 +966,10 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
         if (!notes[id]) continue;
         if (delay) {
           return setTimeout(function() {
-            playChannel(channel, id);
+            playChannel(channel, id, velocity);
           }, delay * 1000);
         } else {
-          playChannel(channel, id);
+          playChannel(channel, id, velocity);
         }
       }
     };
@@ -1006,22 +1025,11 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
     var ctx; // audio context
     var sources = {};
     var effects = {};
-    var masterVolume = 127;
     var audioBuffers = {};
     ///
     midi.audioBuffers = audioBuffers;
     midi.send = function(data, delay) { };
     midi.setController = function(channelId, type, value, delay) { };
-
-    midi.setVolume = function(channelId, volume, delay) {
-      if (delay) {
-        setTimeout(function() {
-          masterVolume = volume;
-        }, delay * 1000);
-      } else {
-        masterVolume = volume;
-      }
-    };
 
     midi.programChange = function(channelId, program, delay) {
 // 			if (delay) {
@@ -1083,7 +1091,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       }
 
       /// add gain + pitchShift
-      var gain = (velocity / 127) * (masterVolume / 127) * 2 - 1;
+      var gain = velocity / 127 * 2 - 1;
       source.connect(ctx.destination);
       source.playbackRate.value = 1; // pitch shift
       source.gainNode = ctx.createGain(); // gain
@@ -1110,7 +1118,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       return source;
     };
 
-    midi.noteOff = function(channelId, noteId, delay) {
+    midi.noteOff = function(channelId, noteId, velocity, delay) {
       delay = delay || 0;
 
       /// check whether the note exists
@@ -1156,6 +1164,9 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
         }
       }
     };
+
+    midi.noteAftertouch = function(channel, note, amount, delay) { };
+    midi.channelAftertouch = function(channel, amount, delay) { };
 
     midi.chordOn = function(channel, chord, velocity, delay) {
       var res = {};
@@ -1329,16 +1340,9 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
   var output = null;
   var channels = [];
   var midi = root.WebMIDI = {api: 'webmidi'};
-  midi.send = function(data, delay) { // set channel volume
-    output.send(data, delay * 1000);
-  };
 
   midi.setController = function(channel, type, value, delay) {
-    output.send([channel, type, value], delay * 1000);
-  };
-
-  midi.setVolume = function(channel, volume, delay) { // set channel volume
-    output.send([0xB0 + channel, 0x07, volume], delay * 1000);
+    output.send([0xB0 + channel, type, value], delay * 1000);
   };
 
   midi.programChange = function(channel, program, delay) { // change patch (instrument)
@@ -1346,15 +1350,23 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
   };
 
   midi.pitchBend = function(channel, program, delay) { // pitch bend
-    output.send([0xE0 + channel, program], delay * 1000);
+    output.send([0xE0 + channel, program & 0x7F, program >> 7], delay * 1000);
   };
 
   midi.noteOn = function(channel, note, velocity, delay) {
     output.send([0x90 + channel, note, velocity], delay * 1000);
   };
 
-  midi.noteOff = function(channel, note, delay) {
-    output.send([0x80 + channel, note, 0], delay * 1000);
+  midi.noteOff = function(channel, note, velocity, delay) {
+    output.send([0x80 + channel, note, velocity], delay * 1000);
+  };
+
+  midi.noteAftertouch = function(channel, note, amount, delay) {
+    output.send([0xA0 + channel, note, amount], delay * 1000);
+  };
+
+  midi.channelAftertouch = function(channel, amount, delay) {
+    output.send([0xD0 + channel, amount], delay * 1000);
   };
 
   midi.chordOn = function(channel, chord, velocity, delay) {
@@ -1372,7 +1384,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
   };
 
   midi.stopAllNotes = function() {
-    output.cancel();
+    if (output.clear) output.clear();
     for (var channel = 0; channel < 16; channel ++) {
       output.send([0xB0 + channel, 0x7B, 0]);
     }
@@ -1394,15 +1406,12 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
     navigator.requestMIDIAccess().then(function(access) {
       plugin = access;
       var pluginOutputs = plugin.outputs;
-      if (typeof pluginOutputs == 'function') { // Chrome pre-43
-        output = pluginOutputs()[0];
-      } else { // Chrome post-43
-        output = pluginOutputs[0];
-      }
-      if (output === undefined) { // nothing there...
-        errFunction();
-      } else {
+      if (typeof pluginOutputs == 'function') pluginOutputs = pluginOutputs();  // Chrome pre-43
+      if (pluginOutputs.size > 0) {
+        output = pluginOutputs.values().next().value;
         opts.onsuccess && opts.onsuccess();
+      } else {
+        errFunction();  // nothing there...
       }
     }, errFunction);
   };
