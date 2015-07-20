@@ -1407,8 +1407,13 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       plugin = access;
       var pluginOutputs = plugin.outputs;
       if (typeof pluginOutputs == 'function') pluginOutputs = pluginOutputs();  // Chrome pre-43
-      if (pluginOutputs.size > 0) {
-        output = pluginOutputs.values().next().value;
+      pluginOutputs = pluginOutputs.values();
+      for (var o = pluginOutputs.next(); o && !o.done; o = pluginOutputs.next())
+        if (!o.value.name.startsWith('Midi Through Port-')) { // this one doesn't seem to be working
+          output = o.value;
+          break;
+        }
+      if (output) {
         opts.onsuccess && opts.onsuccess();
       } else {
         errFunction();  // nothing there...
