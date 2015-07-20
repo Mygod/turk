@@ -1105,7 +1105,7 @@ if (typeof MIDI.Player === 'undefined') MIDI.Player = {};
       source.playbackRate.value = 1; // pitch shift
       source.gainNode = ctx.createGain(); // gain
       source.gainNode.connect(ctx.destination);
-      source.gainNode.gain.value = Math.min(1.0, Math.max(-1.0, gain));
+      source.gainNode.gain.value = Math.min(1.0, Math.max(0, gain));
       source.connect(source.gainNode);
       ///
       if (useStreamingBuffer) {

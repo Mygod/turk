@@ -1,4 +1,4 @@
-# The Musical Turk
+# [The Musical Turk](http://turk.coding.io)
 
 An Animusic-inspired machine that plays classical music with marbles.
 
